@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "veritas"
+version = "0.1.0"
+description = ""
+authors = []
+packages = [{ include = "packages" }]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.19.0"
+pyright = "^1.1.408"
+ruff = "^0.15.0"
+pytest = "^8.2.0"
+pytest-asyncio = "^0.25.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]

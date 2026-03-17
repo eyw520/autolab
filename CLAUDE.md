@@ -1,0 +1,21 @@
+## Overview
+
+The `packages` subdirectory contains all Python subrepos.
+
+Shared configuration files:
+- `ruff.toml` - Ruff linting/formatting (auto-discovered by all packages)
+- `mypy.ini` - Mypy type checking configuration
+- `pyrightconfig.json` - Pyright type checking configuration
+- `poetry.toml` - Poetry virtualenv settings
+
+## Utilities
+
+Aggregate targets (run from root directory):
+
+- `make check` - Check all packages
+- `make lint` - Lint all packages
+- `make test` - Test all packages
+- `make typecheck` - Type check all packages
+
+Or run per-package:
+- `make check-api`, `make lint-cli`, etc.
