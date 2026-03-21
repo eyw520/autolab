@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "pretraining-gpt"
+version = "0.1.0"
+description = "GPT pretraining experiment for autoresearch"
+authors = []
+packages = [{ include = "pretraining_gpt", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+torch = "^2.5.0"
+numpy = "^2.0"
+pyarrow = "^18.0"
+requests = "^2.32"
+tiktoken = "^0.8"
+autoresearch = { path = "../../../autoresearch", develop = true }
+kernels = { version = ">=0.11.7", optional = true }
+rustbpe = { version = ">=0.1.0", optional = true }
+
+[tool.poetry.extras]
+cuda = ["kernels", "rustbpe"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
