@@ -3,10 +3,7 @@ name = "veritas"
 version = "0.1.0"
 description = "ML research workspace"
 authors = []
-packages = [
-    { include = "autoresearch", from = "src" },
-    { include = "pretraining_gpt", from = "experiments/pretraining-gpt/src" },
-]
+packages = [{ include = "autoresearch", from = "src" }]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
