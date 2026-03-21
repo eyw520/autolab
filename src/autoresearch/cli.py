@@ -6,7 +6,7 @@ import sys
 from autoresearch.runner import run
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Run an autoresearch experiment")
     parser.add_argument(
         "project",

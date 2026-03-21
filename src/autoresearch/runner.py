@@ -4,7 +4,7 @@ import time
 
 import torch
 
-from autoresearch.interface import Experiment, Harness, TrainingResult
+from autoresearch.interface import Experiment, Harness, TrainingConfig, TrainingResult
 
 
 def get_device() -> torch.device:
@@ -75,7 +75,7 @@ def _train_loop(
     experiment: Experiment,
     model: torch.nn.Module,
     optimizer: torch.optim.Optimizer,
-    training_config,
+    training_config: TrainingConfig,
     device: torch.device,
 ) -> TrainingResult:
     use_cuda = device.type == "cuda"
