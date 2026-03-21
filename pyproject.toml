@@ -1,14 +1,16 @@
 [tool.poetry]
 name = "veritas"
 version = "0.1.0"
-description = ""
+description = "ML research workspace"
 authors = []
-packages = [{ include = "projects" }]
+packages = [{ include = "autoresearch", from = "src" }]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
 torch = ">=2.0"
-transformers = ">=4.30"
+
+[tool.poetry.scripts]
+autoresearch = "autoresearch.cli:main"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.19.0"
