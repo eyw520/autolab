@@ -8,10 +8,12 @@ packages = [{ include = "autoresearch/agent_rl" }]
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
 fleet-python = { version = ">=0.2", optional = true }
+anthropic = { version = ">=0.40", optional = true }
 vllm = { version = ">=0.6", optional = true }
 
 [tool.poetry.extras]
 fleet = ["fleet-python"]
+anthropic = ["anthropic"]
 train = ["vllm"]
 
 [build-system]
