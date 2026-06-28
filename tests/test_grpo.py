@@ -55,3 +55,24 @@ def test_grpo_learns_taskboard():
     trajectories = RolloutEngine(factory, _reward, max_steps=num_items).collect(policy, 40, base_seed=10_000)
     eval_return = sum(t.total_reward for t in trajectories) / len(trajectories)
     assert eval_return >= 0.8
+
+
+def test_grpo_with_reference_kl():
+    torch.manual_seed(0)
+    random.seed(0)
+    num_items = 3
+    factory = make_taskboard_env_factory(num_items)
+    policy = _LinearPolicy(num_items)
+    ctx = RunContext(device=torch.device("cpu"), budget=Budget(env_steps=4000), seed=0)
+    agent_rl_loop(
+        policy,
+        factory,
+        _reward,
+        ctx,
+        AgentRLConfig(episodes_per_batch=16, max_steps_per_episode=num_items, num_parallel_envs=1, group_size=8),
+        trainer=TorchGRPOTrainer(lr=0.1, kl_coef=0.05),
+    )
+    assert "kl" in ctx.telemetry
+    trajectories = RolloutEngine(factory, _reward, max_steps=num_items).collect(policy, 40, base_seed=10_000)
+    eval_return = sum(t.total_reward for t in trajectories) / len(trajectories)
+    assert eval_return >= 0.7
