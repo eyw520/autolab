@@ -37,7 +37,7 @@ def agent_rl_loop(
         metrics = trainer.update(policy, groups)
         mean_reward = sum(t.total_reward for t in trajectories) / max(1, len(trajectories))
         iteration += 1
-        ctx.record({"train_reward": mean_reward, "env_steps": float(total_env_steps), **metrics})
+        ctx.log_step({"train_reward": mean_reward, "env_steps": float(total_env_steps), **metrics})
         print(
             f"\riter {iteration:03d} | env_steps {total_env_steps:6d} | train_reward {mean_reward:6.2f}    ",
             end="",

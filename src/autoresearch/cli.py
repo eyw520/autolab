@@ -84,7 +84,9 @@ def main() -> None:
         print(f"  {e}")
         sys.exit(1)
 
-    label = Path(args.project).name
+    project_path = Path(args.project)
+    label = project_path.name
+    output_dir = project_path if project_path.exists() else None
 
     if args.prepare:
         print(f"Preparing data for {label}...")
@@ -92,7 +94,7 @@ def main() -> None:
         print("Done!")
     else:
         print(f"Running experiment: {label}")
-        run(harness, experiment)
+        run(harness, experiment, output_dir=output_dir)
 
 
 if __name__ == "__main__":

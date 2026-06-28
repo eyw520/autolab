@@ -13,6 +13,7 @@ _GITIGNORE = """__pycache__/
 
 run.log
 results.tsv
+runs/
 """
 
 

@@ -49,8 +49,13 @@ class RunContext:
     budget: Budget
     seed: int
     telemetry: dict[str, float] = field(default_factory=dict)
+    history: list[dict[str, float]] = field(default_factory=list)
 
     def record(self, metrics: dict[str, float]) -> None:
+        self.telemetry.update(metrics)
+
+    def log_step(self, metrics: dict[str, float]) -> None:
+        self.history.append(dict(metrics))
         self.telemetry.update(metrics)
 
 
