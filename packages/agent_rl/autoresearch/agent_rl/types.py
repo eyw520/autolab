@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
@@ -31,3 +32,10 @@ class Trajectory:
 @runtime_checkable
 class Policy(Protocol):
     def act(self, observation: dict[str, Any]) -> dict[str, Any]: ...
+
+
+@runtime_checkable
+class TrainablePolicy(Policy, Protocol):
+    def action_log_prob(self, observation: dict[str, Any], action: dict[str, Any]) -> Any: ...
+
+    def parameters(self) -> Iterable[Any]: ...

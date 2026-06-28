@@ -23,7 +23,20 @@ class RolloutEngine:
         self._num_parallel = num_parallel
 
     def collect(self, policy: Policy, num_episodes: int, base_seed: int) -> list[Trajectory]:
-        seeds = [base_seed + i for i in range(num_episodes)]
+        return self._run(policy, [base_seed + i for i in range(num_episodes)])
+
+    def collect_groups(
+        self,
+        policy: Policy,
+        num_prompts: int,
+        group_size: int,
+        base_seed: int,
+    ) -> list[list[Trajectory]]:
+        seeds = [base_seed + prompt for prompt in range(num_prompts) for _ in range(group_size)]
+        flat = self._run(policy, seeds)
+        return [flat[i * group_size : (i + 1) * group_size] for i in range(num_prompts)]
+
+    def _run(self, policy: Policy, seeds: list[int]) -> list[Trajectory]:
         if self._num_parallel <= 1:
             return [self._episode(policy, seed) for seed in seeds]
         with ThreadPoolExecutor(max_workers=self._num_parallel) as pool:

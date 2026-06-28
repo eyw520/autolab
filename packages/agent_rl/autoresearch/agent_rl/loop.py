@@ -13,6 +13,7 @@ class AgentRLConfig:
     episodes_per_batch: int
     max_steps_per_episode: int
     num_parallel_envs: int = 1
+    group_size: int = 1
 
 
 def agent_rl_loop(
@@ -30,9 +31,10 @@ def agent_rl_loop(
     iteration = 0
     while not ctx.budget.exceeded(env_steps=total_env_steps):
         base_seed = ctx.seed + iteration * config.episodes_per_batch
-        trajectories = engine.collect(policy, config.episodes_per_batch, base_seed)
+        groups = engine.collect_groups(policy, config.episodes_per_batch, config.group_size, base_seed)
+        trajectories = [t for group in groups for t in group]
         total_env_steps += sum(t.num_steps for t in trajectories)
-        metrics = trainer.update(policy, trajectories)
+        metrics = trainer.update(policy, groups)
         mean_reward = sum(t.total_reward for t in trajectories) / max(1, len(trajectories))
         iteration += 1
         ctx.record({"train_reward": mean_reward, "env_steps": float(total_env_steps), **metrics})
