@@ -67,7 +67,8 @@ poetry run autoresearch experiments/exp-{name}
 - `Experiment.run(harness, ctx)` owns the training/optimization loop and returns the artifact.
 
 Keep harness code (objective, eval, constraints) fixed; optimize the experiment side.
-Reusable loop helpers live in `autoresearch.loops`. See `PROGRAM.md` for the full loop.
+Reusable loop helpers live in the `packages/` protocols (`autoresearch.supervised.loop`,
+`autoresearch.agent_rl.loop`). See `PROGRAM.md` for the full loop.
 """
 
 

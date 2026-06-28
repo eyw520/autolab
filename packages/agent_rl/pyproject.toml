@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "autoresearch-agent-rl"
+version = "0.1.0"
+description = "Agent reinforcement learning training protocol for autoresearch"
+authors = []
+packages = [{ include = "autoresearch/agent_rl" }]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+fleet-python = { version = ">=0.2", optional = true }
+vllm = { version = ">=0.6", optional = true }
+
+[tool.poetry.extras]
+fleet = ["fleet-python"]
+train = ["vllm"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
