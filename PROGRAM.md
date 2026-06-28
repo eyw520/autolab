@@ -1,11 +1,11 @@
-# Veritas Experiments
+# autolab Experiments
 
-This document describes how to run autonomous research experiments in veritas.
+This document describes how to run autonomous research experiments in autolab.
 
 ## Architecture
 
 ```
-veritas/
+autolab/
   src/autoresearch/         # Generic experiment runner
   experiments/
     exp-<name>/             # Each experiment is its own git repo
@@ -18,9 +18,21 @@ veritas/
 
 Experiments follow the `exp-<name>` naming convention (e.g., `exp-pretraining-gpt`).
 
+## Creating a New Experiment
+
+Scaffold a new experiment (creates `experiments/exp-<name>/` with stub harness and experiment):
+
+```bash
+poetry run autoresearch-new <name>
+```
+
+Then implement the two protocols in `src/<name>/interface.py`.
+
 ## Running an Experiment
 
-All commands run from the veritas root directory.
+All commands run from the autolab root directory. The runner discovers the package
+under the experiment's `src/` automatically, so the directory name and package name
+need not match.
 
 ### Prepare data (one-time)
 

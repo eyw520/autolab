@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "veritas"
+name = "autolab"
 version = "0.1.0"
 description = "ML research workspace"
 authors = []
@@ -20,6 +20,7 @@ cuda = ["kernels", "rustbpe"]
 
 [tool.poetry.scripts]
 autoresearch = "autoresearch.cli:main"
+autoresearch-new = "autoresearch.scaffold:main"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.19.0"

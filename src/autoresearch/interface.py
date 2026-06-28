@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 import torch
 import torch.nn as nn
@@ -29,6 +29,7 @@ class TrainingResult:
     final_loss: float
 
 
+@runtime_checkable
 class Harness(Protocol):
     @property
     def config(self) -> HarnessConfig: ...
@@ -53,6 +54,7 @@ class Harness(Protocol):
     ) -> dict[str, float]: ...
 
 
+@runtime_checkable
 class Experiment(Protocol):
     def get_training_config(self, device: torch.device) -> TrainingConfig: ...
 
