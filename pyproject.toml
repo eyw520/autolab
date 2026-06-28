@@ -24,6 +24,7 @@ cuda = ["kernels", "rustbpe"]
 autoresearch = "autoresearch.cli:main"
 autoresearch-new = "autoresearch.scaffold:main"
 autoresearch-launch = "autoresearch.launch:main"
+autoresearch-report = "autoresearch.report:main"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.19.0"

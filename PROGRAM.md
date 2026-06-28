@@ -156,6 +156,25 @@ make typecheck   # mypy src/ and packages/*/autoresearch
 make test        # pytest tests/
 ```
 
+## Results and reporting
+
+Each run persists to `<experiment>/runs/<run-id>/` (the CLI passes the experiment dir as
+the output location automatically; `runs/` is gitignored):
+
+- `result.json` — final metrics, status, seed, the full `spec`, git commit/branch, and
+  timestamp. Every number is attributable to an exact config and code state.
+- `metrics.jsonl` — one telemetry line per training iteration (the learning curve),
+  emitted via `ctx.log_step(...)`. Use `record()` for one-off summary values,
+  `log_step()` for per-iteration history.
+
+Summarize and compare runs with the report CLI (sorts by `primary_metric` in
+`spec.direction`; crashed/NaN runs last):
+
+```bash
+poetry run autoresearch-report experiments/exp-<name>           # leaderboard, best first
+poetry run autoresearch-report experiments/exp-<name> --json    # machine-readable
+```
+
 ## The autonomous loop
 
 Experiments are conventionally their own git repos, so each attempt is a branch and
@@ -165,7 +184,8 @@ provenance is just git history.
 2. Modify files in `experiment/` or `interface.py`.
 3. Commit.
 4. Run: `poetry run autoresearch experiments/exp-<name> > experiments/exp-<name>/run.log 2>&1`.
-5. Grep the log for the experiment's `primary_metric`.
+5. Read the result: `autoresearch-report experiments/exp-<name>`, or read
+   `runs/<run-id>/result.json` (the per-run `metrics.jsonl` holds the learning curve).
 6. Keep the change if the metric improved **in the direction declared by `spec.direction`**, else revert.
 7. Repeat indefinitely.
 
