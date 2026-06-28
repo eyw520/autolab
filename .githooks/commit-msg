@@ -1,0 +1,25 @@
+#!/bin/sh
+
+commit_msg_file="$1"
+commit_msg=$(cat "$commit_msg_file")
+
+pattern="^(feat|fix|chore|clean|revert): [A-Z].*\.$"
+
+if ! echo "$commit_msg" | head -1 | grep -qE "$pattern"; then
+  echo ""
+  echo "ERROR: Invalid commit message format."
+  echo ""
+  echo "Expected: <type>: <Title case message ending with period.>"
+  echo "Types: feat, fix, chore, clean, revert"
+  echo ""
+  echo "Examples:"
+  echo "  feat: Add user authentication."
+  echo "  fix: Resolve null pointer in login flow."
+  echo "  chore: Update dependencies."
+  echo "  clean: Remove unused imports."
+  echo "  revert: Revert commit 0e034."
+  echo ""
+  echo "Your message: $commit_msg"
+  echo ""
+  exit 1
+fi
