@@ -37,3 +37,23 @@ def test_off_goal_completion_ends_unsolved():
     result = env.step({"tool": "complete", "item": env.goal.index(0)})
     assert result.done
     assert not env.is_solved()
+
+
+def test_goal_size_fixes_goal_count():
+    env = TaskBoardEnv(seed=1, num_items=5, goal_size=3)
+    assert sum(env.goal) == 3
+
+
+def test_ordered_out_of_order_fails():
+    env = TaskBoardEnv(seed=1, num_items=5, goal_size=3, ordered=True)
+    goal_items = [i for i, g in enumerate(env.goal) if g]
+    result = env.step({"tool": "complete", "item": goal_items[-1]})
+    assert result.done
+    assert not env.is_solved()
+
+
+def test_ordered_in_order_solves():
+    env = TaskBoardEnv(seed=1, num_items=5, goal_size=3, ordered=True)
+    for i in sorted(i for i, g in enumerate(env.goal) if g):
+        env.step({"tool": "complete", "item": i})
+    assert env.is_solved()
