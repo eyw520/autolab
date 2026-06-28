@@ -17,103 +17,57 @@ results.tsv
 
 
 def _interface_template(package: str) -> str:
-    return f"""from collections.abc import Iterator
+    prefix = _class_prefix(package)
+    return f"""from typing import Any
 
-import torch
-import torch.nn as nn
-import torch.optim as optim
-
-from autoresearch.interface import HarnessConfig, TrainingConfig
+from autoresearch.interface import Budget, HarnessSpec, RunContext
 
 
-class {_class_prefix(package)}Harness:
+class {prefix}Harness:
     @property
-    def config(self) -> HarnessConfig:
-        return HarnessConfig(
-            time_budget=300,
-            seq_len=1024,
-            primary_metric="val_loss",
-            cache_dir="~/.cache/{package}",
+    def spec(self) -> HarnessSpec:
+        return HarnessSpec(
+            primary_metric="metric",
+            direction="min",
+            budget=Budget(wall_clock_s=300),
+            domain={{}},
         )
 
     def prepare(self) -> None:
-        raise NotImplementedError("Download data / train tokenizer here.")
+        pass
 
-    def get_vocab_size(self) -> int:
-        raise NotImplementedError
-
-    def make_dataloader(
-        self,
-        split: str,
-        batch_size: int,
-        seq_len: int,
-        device: torch.device,
-    ) -> Iterator[tuple[torch.Tensor, torch.Tensor, int]]:
-        raise NotImplementedError
-
-    def evaluate(
-        self,
-        model: nn.Module,
-        batch_size: int,
-        device: torch.device,
-    ) -> dict[str, float]:
+    def evaluate(self, artifact: Any, ctx: RunContext) -> dict[str, float]:
         raise NotImplementedError
 
 
-class {_class_prefix(package)}Experiment:
-    def get_training_config(self, device: torch.device) -> TrainingConfig:
-        return TrainingConfig(total_batch_size=2**12, device_batch_size=8)
-
-    def build_model(
-        self,
-        vocab_size: int,
-        seq_len: int,
-        device: torch.device,
-    ) -> nn.Module:
-        raise NotImplementedError
-
-    def build_optimizer(
-        self,
-        model: nn.Module,
-        training_config: TrainingConfig,
-        device: torch.device,
-    ) -> optim.Optimizer:
-        raise NotImplementedError
-
-    def train_step(
-        self,
-        model: nn.Module,
-        optimizer: optim.Optimizer,
-        x: torch.Tensor,
-        y: torch.Tensor,
-        step: int,
-        progress: float,
-        device: torch.device,
-    ) -> float:
+class {prefix}Experiment:
+    def run(self, harness: {prefix}Harness, ctx: RunContext) -> Any:
         raise NotImplementedError
 
 
-harness = {_class_prefix(package)}Harness()
-experiment = {_class_prefix(package)}Experiment()
+harness = {prefix}Harness()
+experiment = {prefix}Experiment()
 """
 
 
 def _experiment_md(name: str, package: str) -> str:
     return f"""# {name}
 
-Experiment for autoresearch. Implement the harness and experiment in
+Experiment for autoresearch. Implement the experiment side of
 `src/{package}/interface.py`, then run from the repo root:
 
 ```bash
 poetry run autoresearch experiments/exp-{name}
 ```
 
-## Boundaries
+## Contract
 
-- `src/{package}/experiment/` and `interface.py` are **modifiable** (model, optimizer, training).
-- `src/{package}/harness/` is **fixed** (data, eval, constraints).
+- `Harness.spec` declares the fixed `primary_metric`, `direction` (min/max), and `budget`.
+- `Harness.evaluate(artifact, ctx)` scores the artifact your experiment produces.
+- `Experiment.run(harness, ctx)` owns the training/optimization loop and returns the artifact.
 
-See `PROGRAM.md` at the repo root for the full experiment loop.
+Keep harness code (objective, eval, constraints) fixed; optimize the experiment side.
+Reusable loop helpers live in `autoresearch.loops`. See `PROGRAM.md` for the full loop.
 """
 
 

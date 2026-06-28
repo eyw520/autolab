@@ -2,75 +2,67 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from autoresearch.interface import HarnessConfig, TrainingConfig
-from autoresearch.runner import get_device, run
-
-
-VOCAB = 16
-SEQ = 8
-
-
-class _TinyModel(nn.Module):
-    def __init__(self, vocab: int, dim: int = 8) -> None:
-        super().__init__()
-        self.emb = nn.Embedding(vocab, dim)
-        self.head = nn.Linear(dim, vocab)
-
-    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-        logits = self.head(self.emb(x))
-        return nn.functional.cross_entropy(logits.view(-1, logits.size(-1)), y.view(-1))
+from autoresearch.interface import Budget, HarnessSpec, RunContext
+from autoresearch.runner import run
+from autoresearch.util import get_device
 
 
 class FakeHarness:
+    def __init__(self, primary: str = "val_loss") -> None:
+        self._primary = primary
+
     @property
-    def config(self) -> HarnessConfig:
-        return HarnessConfig(time_budget=1, seq_len=SEQ, primary_metric="val_loss", cache_dir="/tmp")
+    def spec(self) -> HarnessSpec:
+        return HarnessSpec(self._primary, "min", Budget(steps=5))
 
     def prepare(self) -> None:
         pass
 
-    def get_vocab_size(self) -> int:
-        return VOCAB
-
-    def make_dataloader(self, split, batch_size, seq_len, device):  # type: ignore[no-untyped-def]
-        gen = torch.Generator().manual_seed(0)
-        while True:
-            x = torch.randint(0, VOCAB, (batch_size, seq_len), generator=gen).to(device)
-            y = torch.randint(0, VOCAB, (batch_size, seq_len), generator=gen).to(device)
-            yield x, y, 1
-
-    def evaluate(self, model, batch_size, device):  # type: ignore[no-untyped-def]
-        x = torch.randint(0, VOCAB, (batch_size, SEQ)).to(device)
+    def evaluate(self, artifact: nn.Module, ctx: RunContext) -> dict[str, float]:
+        x = torch.randn(8, 4, device=ctx.device)
         with torch.no_grad():
-            loss = model(x, x)
-        return {"val_loss": float(loss.item())}
+            loss = nn.functional.cross_entropy(artifact(x), torch.zeros(8, dtype=torch.long, device=ctx.device))
+        return {self._primary: float(loss.item())}
 
 
 class FakeExperiment:
-    def get_training_config(self, device):  # type: ignore[no-untyped-def]
-        b = 4
-        return TrainingConfig(total_batch_size=b * SEQ, device_batch_size=b)
+    def run(self, harness: FakeHarness, ctx: RunContext) -> nn.Module:
+        model = nn.Linear(4, 2).to(ctx.device)
+        opt = optim.SGD(model.parameters(), lr=0.01)
+        x = torch.randn(8, 4, device=ctx.device)
+        target = torch.randint(0, 2, (8,), device=ctx.device)
+        step = 0
+        while not ctx.budget.exceeded(steps=step):
+            opt.zero_grad()
+            nn.functional.cross_entropy(model(x), target).backward()
+            opt.step()
+            step += 1
+        ctx.record({"num_steps": float(step)})
+        return model
 
-    def build_model(self, vocab_size, seq_len, device):  # type: ignore[no-untyped-def]
-        return _TinyModel(vocab_size).to(device)
 
-    def build_optimizer(self, model, training_config, device):  # type: ignore[no-untyped-def]
-        return optim.SGD(model.parameters(), lr=0.1)
-
-    def train_step(self, model, optimizer, x, y, step, progress, device):  # type: ignore[no-untyped-def]
-        loss = model(x, y)
-        loss.backward()
-        return float(loss.item())
+class CrashingExperiment:
+    def run(self, harness: FakeHarness, ctx: RunContext) -> nn.Module:
+        raise RuntimeError("diverged")
 
 
 def test_get_device_returns_torch_device() -> None:
     assert isinstance(get_device(), torch.device)
 
 
-def test_run_completes_and_reports_metrics(monkeypatch) -> None:  # type: ignore[no-untyped-def]
+def test_run_completes_and_merges_telemetry(monkeypatch) -> None:  # type: ignore[no-untyped-def]
     monkeypatch.setattr("autoresearch.runner.get_device", lambda: torch.device("cpu"))
-    result = run(FakeHarness(), FakeExperiment())
-    assert "val_loss" in result
-    assert result["num_steps"] > 0
-    assert result["total_seconds"] >= 0
-    assert "total_tokens_M" in result
+    record = run(FakeHarness(), FakeExperiment())
+    assert "val_loss" in record
+    assert record["num_steps"] == 5.0
+    assert "total_seconds" in record
+    assert "peak_vram_mb" in record
+
+
+def test_run_handles_crash(monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    monkeypatch.setattr("autoresearch.runner.get_device", lambda: torch.device("cpu"))
+    record = run(FakeHarness(), CrashingExperiment())
+    assert "val_loss" in record
+    import math
+
+    assert math.isnan(record["val_loss"])

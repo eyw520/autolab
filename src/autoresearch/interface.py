@@ -1,84 +1,69 @@
-from collections.abc import Iterator
-from dataclasses import dataclass
-from typing import Protocol, runtime_checkable
+from dataclasses import dataclass, field
+from typing import Any, Literal, Protocol, runtime_checkable
 
 import torch
-import torch.nn as nn
-import torch.optim as optim
+
+
+Direction = Literal["min", "max"]
 
 
 @dataclass
-class HarnessConfig:
-    time_budget: int
-    seq_len: int
+class Budget:
+    wall_clock_s: float | None = None
+    steps: int | None = None
+    env_steps: int | None = None
+
+    def exceeded(self, *, elapsed: float = 0.0, steps: int = 0, env_steps: int = 0) -> bool:
+        if self.wall_clock_s is not None and elapsed >= self.wall_clock_s:
+            return True
+        if self.steps is not None and steps >= self.steps:
+            return True
+        if self.env_steps is not None and env_steps >= self.env_steps:
+            return True
+        return False
+
+    def progress(self, *, elapsed: float = 0.0, steps: int = 0, env_steps: int = 0) -> float:
+        fracs: list[float] = []
+        if self.wall_clock_s:
+            fracs.append(elapsed / self.wall_clock_s)
+        if self.steps:
+            fracs.append(steps / self.steps)
+        if self.env_steps:
+            fracs.append(env_steps / self.env_steps)
+        if not fracs:
+            return 0.0
+        return min(1.0, max(fracs))
+
+
+@dataclass
+class HarnessSpec:
     primary_metric: str
-    cache_dir: str
+    direction: Direction
+    budget: Budget
+    domain: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
-class TrainingConfig:
-    total_batch_size: int
-    device_batch_size: int
+class RunContext:
+    device: torch.device
+    budget: Budget
+    seed: int
+    telemetry: dict[str, float] = field(default_factory=dict)
 
-
-@dataclass
-class TrainingResult:
-    total_training_time: float
-    total_tokens: int
-    num_steps: int
-    final_loss: float
+    def record(self, metrics: dict[str, float]) -> None:
+        self.telemetry.update(metrics)
 
 
 @runtime_checkable
 class Harness(Protocol):
     @property
-    def config(self) -> HarnessConfig: ...
+    def spec(self) -> HarnessSpec: ...
 
     def prepare(self) -> None: ...
 
-    def get_vocab_size(self) -> int: ...
-
-    def make_dataloader(
-        self,
-        split: str,
-        batch_size: int,
-        seq_len: int,
-        device: torch.device,
-    ) -> Iterator[tuple[torch.Tensor, torch.Tensor, int]]: ...
-
-    def evaluate(
-        self,
-        model: nn.Module,
-        batch_size: int,
-        device: torch.device,
-    ) -> dict[str, float]: ...
+    def evaluate(self, artifact: Any, ctx: RunContext) -> dict[str, float]: ...
 
 
 @runtime_checkable
 class Experiment(Protocol):
-    def get_training_config(self, device: torch.device) -> TrainingConfig: ...
-
-    def build_model(
-        self,
-        vocab_size: int,
-        seq_len: int,
-        device: torch.device,
-    ) -> nn.Module: ...
-
-    def build_optimizer(
-        self,
-        model: nn.Module,
-        training_config: TrainingConfig,
-        device: torch.device,
-    ) -> optim.Optimizer: ...
-
-    def train_step(
-        self,
-        model: nn.Module,
-        optimizer: optim.Optimizer,
-        x: torch.Tensor,
-        y: torch.Tensor,
-        step: int,
-        progress: float,
-        device: torch.device,
-    ) -> float: ...
+    def run(self, harness: Any, ctx: RunContext) -> Any: ...
