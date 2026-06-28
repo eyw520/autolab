@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from autoresearch.interface import Budget, RunContext
-from autoresearch.loops import SupervisedConfig, supervised_loop
+from autoresearch.supervised.loop import SupervisedConfig, supervised_loop
 
 
 SEQ = 4
