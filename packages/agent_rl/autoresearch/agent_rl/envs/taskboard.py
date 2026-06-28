@@ -4,6 +4,7 @@ from typing import Any
 
 from autoresearch.agent_rl.envs.protocol import AgentEnv
 from autoresearch.agent_rl.types import StepResult
+from autoresearch.agent_rl.verifiers.state import StateSnapshot
 
 
 class TaskBoardEnv:
@@ -42,6 +43,14 @@ class TaskBoardEnv:
 
     def is_solved(self) -> bool:
         return self._statuses == self._goal
+
+    @property
+    def goal(self) -> list[int]:
+        return list(self._goal)
+
+    def snapshot(self, which: str = "current") -> StateSnapshot:
+        statuses = [0] * self._num_items if which == "seed" else self._statuses
+        return StateSnapshot({"items": {str(i): {"done": statuses[i]} for i in range(self._num_items)}})
 
     def _observe(self) -> dict[str, Any]:
         return {"statuses": list(self._statuses), "goal": list(self._goal), "step": self._steps}
