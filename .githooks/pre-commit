@@ -1,0 +1,28 @@
+#!/bin/sh
+# Pre-commit gate: block staged credentials, then run the repo's full gate
+# (check + typecheck + test, as CI does) — cached by tree hash, so identical
+# content never pays for the gate twice. Bypass with --no-verify when you must;
+# CI still runs the gate.
+
+hooks_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+
+if [ -x "$hooks_dir/secret-scan" ]; then
+  "$hooks_dir/secret-scan" || exit 1
+fi
+
+git_dir=$(git rev-parse --git-dir)
+cache="$git_dir/standards-gate-pass"
+tree=$(git write-tree 2>/dev/null)
+worktree_matches_index() { git diff --quiet; }
+
+if [ -n "$tree" ] && worktree_matches_index \
+   && [ -f "$cache" ] && [ "$(cat "$cache")" = "$tree" ]; then
+  echo "pre-commit: gate already green for this exact tree ($tree) — skipping"
+  exit 0
+fi
+
+make check typecheck test || exit 1
+
+if [ -n "$tree" ] && worktree_matches_index; then
+  printf '%s\n' "$tree" > "$cache"
+fi

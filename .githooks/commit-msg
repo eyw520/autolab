@@ -1,25 +1,87 @@
 #!/bin/sh
 
+# Commit-message gate. The two variables below are this repo's configuration and
+# the single source of truth for the convention — docs point here, not the reverse.
+# An empty scopes list switches to the scopeless form: <type>: Subject.
+#
+# Cosmetic violations — lowercase subject, trailing whitespace, missing final
+# period — are AUTO-FIXED in place rather than rejected; only a wrong or missing
+# type/scope prefix (or a body) rejects.
+
+types="feat|fix|chore|clean|revert"
+scopes=""
+
+# Optional: derive scopes from top-level directories (uncomment and adapt):
+# for dir in "$(git rev-parse --show-toplevel)/workflows"/*/; do
+#   [ -d "$dir" ] && scopes="$scopes|$(basename "$dir")"
+# done
+
 commit_msg_file="$1"
-commit_msg=$(cat "$commit_msg_file")
+subject=$(grep -v '^#' "$commit_msg_file" | head -1)
+body=$(grep -v '^#' "$commit_msg_file" | tail -n +2 | grep -v '^[[:space:]]*$' || true)
 
-pattern="^(feat|fix|chore|clean|revert): [A-Z].*\.$"
-
-if ! echo "$commit_msg" | head -1 | grep -qE "$pattern"; then
+if [ -n "$body" ]; then
   echo ""
-  echo "ERROR: Invalid commit message format."
-  echo ""
-  echo "Expected: <type>: <Title case message ending with period.>"
-  echo "Types: feat, fix, chore, clean, revert"
-  echo ""
-  echo "Examples:"
-  echo "  feat: Add user authentication."
-  echo "  fix: Resolve null pointer in login flow."
-  echo "  chore: Update dependencies."
-  echo "  clean: Remove unused imports."
-  echo "  revert: Revert commit 0e034."
-  echo ""
-  echo "Your message: $commit_msg"
+  echo "ERROR: Subject line only — no body, no Co-Authored-By or other trailers."
   echo ""
   exit 1
 fi
+
+if [ -n "$scopes" ]; then
+  prefix_pattern="^($types)\(($scopes)\): "
+  expected="<type>(<scope>): <Title case message ending with period.>"
+  example_scope="($(printf '%s' "$scopes" | cut -d'|' -f1))"
+else
+  prefix_pattern="^($types): "
+  expected="<type>: <Title case message ending with period.>"
+  example_scope=""
+fi
+
+reject() {
+  echo ""
+  echo "ERROR: Invalid commit message format."
+  echo ""
+  echo "Expected: $expected"
+  echo "Types: $(printf '%s' "$types" | sed 's/|/, /g')"
+  if [ -n "$scopes" ]; then
+    echo "Scopes: $(printf '%s' "$scopes" | sed 's/|/, /g')"
+  fi
+  echo ""
+  echo "Examples:"
+  echo "  feat$example_scope: Add user authentication."
+  echo "  fix$example_scope: Resolve null pointer in login flow."
+  echo "  chore$example_scope: Update dependencies."
+  echo ""
+  echo "Your message: $subject"
+  echo ""
+  exit 1
+}
+
+printf '%s\n' "$subject" | grep -qE -e "$prefix_pattern" || reject
+
+# Auto-fix the cosmetics: capitalize the subject, trim trailing space, add the period.
+prefix=$(printf '%s\n' "$subject" | grep -oE -e "$prefix_pattern")
+rest=${subject#"$prefix"}
+rest=$(printf '%s' "$rest" | sed 's/[[:space:]]*$//')
+first=$(printf '%s' "$rest" | cut -c1)
+rest="$(printf '%s' "$first" | tr '[:lower:]' '[:upper:]')$(printf '%s' "$rest" | cut -c2-)"
+case "$rest" in
+  *.) ;;
+  *) rest="$rest." ;;
+esac
+fixed="$prefix$rest"
+
+if [ "$fixed" != "$subject" ] && [ "$(head -1 "$commit_msg_file")" = "$subject" ]; then
+  tmp_fix=$(mktemp)
+  { printf '%s\n' "$fixed"; tail -n +2 "$commit_msg_file"; } > "$tmp_fix"
+  mv "$tmp_fix" "$commit_msg_file"
+  subject="$fixed"
+  echo "commit-msg: auto-fixed subject cosmetics -> $subject" >&2
+fi
+
+if [ -n "$scopes" ]; then
+  pattern="^($types)\(($scopes)\): [A-Z].*\.$"
+else
+  pattern="^($types): [A-Z].*\.$"
+fi
+printf '%s\n' "$subject" | grep -qE -e "$pattern" || reject
