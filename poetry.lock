@@ -34,6 +34,43 @@ typing_extensions = {version = ">=4.5", markers = "python_version < \"3.13\""}
 trio = ["trio (>=0.31.0) ; python_version < \"3.10\"", "trio (>=0.32.0) ; python_version >= \"3.10\""]
 
 [[package]]
+name = "autoresearch-agent-rl"
+version = "0.1.0"
+description = "Agent reinforcement learning training protocol for autoresearch"
+optional = false
+python-versions = ">=3.11,<4.0"
+groups = ["main"]
+files = []
+develop = true
+
+[package.extras]
+anthropic = ["anthropic (>=0.40)"]
+fleet = ["fleet-python (>=0.2)"]
+grpo = ["torch (>=2.0)"]
+train = ["vllm (>=0.6)"]
+
+[package.source]
+type = "directory"
+url = "packages/agent_rl"
+
+[[package]]
+name = "autoresearch-supervised"
+version = "0.1.0"
+description = "Supervised training protocol for autoresearch"
+optional = false
+python-versions = ">=3.11,<4.0"
+groups = ["main"]
+files = []
+develop = true
+
+[package.dependencies]
+torch = ">=2.0"
+
+[package.source]
+type = "directory"
+url = "packages/supervised"
+
+[[package]]
 name = "certifi"
 version = "2026.2.25"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -1910,4 +1947,4 @@ cuda = ["kernels", "rustbpe"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4.0"
-content-hash = "537690af83f3a1ac79ae92943b964b8f3c982570f9ae9bb7eff5623bb2355cc1"
+content-hash = "4d607e336cc99894f99778efd9ac7572bfaaf89688beb743d81e4e5c4821695e"
