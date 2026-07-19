@@ -66,7 +66,7 @@ Two orthogonal axes — do not conflate them:
 - Run: `poetry run autoresearch experiments/exp-<name>`, or
   `poetry run autoresearch-launch --target {local,cloud} experiments/exp-<name>`.
 - Iterate: change files under `experiment/`, keep the change if the primary metric
-  improved in `spec.direction`, else revert. See `PROGRAM.md`.
+  improved in `spec.direction`, else revert.
 
 ## First Principles
 
@@ -86,10 +86,3 @@ Run from the root directory (globs cover `src/`, `packages/*/autoresearch`, and
 - `make check` - The gate: lint + format check + typecheck + tests
 - `make typecheck` - Type check `src/` and `packages/*/autoresearch`
 - `make test` - Run `pytest tests/`
-
-## Configuration files
-
-- `ruff.toml` - Ruff linting/formatting
-- `mypy.ini` - Mypy (namespace-package aware)
-- `pyrightconfig.json` - Pyright type checking
-- `poetry.toml` - Poetry virtualenv settings
