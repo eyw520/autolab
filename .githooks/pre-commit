@@ -1,6 +1,6 @@
 #!/bin/sh
 # Pre-commit gate: block staged credentials, then run the repo's full gate
-# (check + typecheck + test, as CI does) — cached by tree hash, so identical
+# (make check, as CI does) — cached by tree hash, so identical
 # content never pays for the gate twice. Bypass with --no-verify when you must;
 # CI still runs the gate.
 
@@ -21,7 +21,7 @@ if [ -n "$tree" ] && worktree_matches_index \
   exit 0
 fi
 
-make check typecheck test || exit 1
+make check || exit 1
 
 if [ -n "$tree" ] && worktree_matches_index; then
   printf '%s\n' "$tree" > "$cache"

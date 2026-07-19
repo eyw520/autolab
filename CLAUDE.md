@@ -83,7 +83,7 @@ Run from the root directory (globs cover `src/`, `packages/*/autoresearch`, and
 
 - `make install` - `poetry install`
 - `make lint` - Auto-fix lint and format
-- `make check` - Lint + format check (no writes)
+- `make check` - The gate: lint + format check + typecheck + tests
 - `make typecheck` - Type check `src/` and `packages/*/autoresearch`
 - `make test` - Run `pytest tests/`
 

@@ -20,7 +20,7 @@ lint:
 	poetry run ruff check $(LINT_PATHS) --unsafe-fixes --fix
 	poetry run ruff format $(LINT_PATHS)
 
-check:
+check: typecheck test
 	poetry run ruff check $(LINT_PATHS)
 	poetry run ruff format --check $(LINT_PATHS)
 
