@@ -1,3 +1,5 @@
+@AGENTS.md
+
 ## Overview
 
 `autolab` is a workspace for autonomous ML research experiments. The core harness is
@@ -68,13 +70,10 @@ Two orthogonal axes — do not conflate them:
 
 ## First Principles
 
-1. Avoid including comments or docstrings unless absolutely necessary.
-2. Never use emojis in your output code generation.
-3. Do not generate `README.md` or `.md` files during code generation unless instructed to do so.
-4. Avoid `__init__.py` files - use direct imports instead. `autoresearch` is a PEP 420
+1. Avoid `__init__.py` files - use direct imports instead. `autoresearch` is a PEP 420
    namespace package shared across `src/` and `packages/*/`; adding an `__init__.py`
    anywhere in it breaks the namespace merge.
-5. Keep heavy third-party dependencies behind optional extras and import them lazily
+2. Keep heavy third-party dependencies behind optional extras and import them lazily
    inside the one adapter that needs them — never at module load on the default path.
 
 ## Utilities
